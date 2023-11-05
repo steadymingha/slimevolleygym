@@ -7,6 +7,7 @@ FPS (no-render): 100000 steps /7.956 seconds. 12.5K/s.
 import math
 import numpy as np
 import gym
+# import gymnasium as gym
 import slimevolleygym
 
 np.set_printoptions(threshold=20, precision=3, suppress=True, linewidth=200)
@@ -32,7 +33,9 @@ if __name__=="__main__":
   """
 
   if RENDER_MODE:
+    import pyglet
     from pyglet.window import key
+
     from time import sleep
 
   manualAction = [0, 0, 0] # forward, backward, jump
@@ -67,13 +70,13 @@ if __name__=="__main__":
   env = gym.make("SlimeVolley-v0")
   env.seed(np.random.randint(0, 10000))
   #env.seed(689)
-
+  obs = env.reset()
   if RENDER_MODE:
     env.render()
     env.viewer.window.on_key_press = key_press
     env.viewer.window.on_key_release = key_release
 
-  obs = env.reset()
+  # obs = env.reset()
 
   steps = 0
   total_reward = 0
