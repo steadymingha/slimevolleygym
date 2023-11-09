@@ -691,7 +691,7 @@ class SlimeVolleyEnv(gym.Env):
 
   from_pixels = False
   atari_mode = False
-  survival_bonus = False # Depreciated: augment reward, easier to train
+  survival_bonus = True#False # Depreciated: augment reward, easier to train
   multiagent = True # optional args anyways
 
   def __init__(self):

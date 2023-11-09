@@ -46,7 +46,7 @@ def train():
     gamma = 0.99  # discount factor
 
     lr_actor = 0.0003  # learning rate for actor network
-    lr_critic = 0.001  # learning rate for critic network
+    lr_critic = 0.001 #0.001  # learning rate for critic network
 
     random_seed = 0  # set random seed if required (0 = no random seed)
     #####################################################
@@ -167,7 +167,8 @@ def train():
     i_episode = 0
 
     # training loop
-    while time_step <= max_training_timesteps:
+    # while time_step <= max_training_timesteps:
+    while True:
 
         state = env.reset()
         current_ep_reward = 0
@@ -187,10 +188,6 @@ def train():
             # update PPO agent
             if time_step % update_timestep == 0:
                 ppo_agent.update()
-
-            # if continuous action space; then decay action std of ouput action distribution
-            if has_continuous_action_space and time_step % action_std_decay_freq == 0:
-                ppo_agent.decay_action_std(action_std_decay_rate, min_action_std)
 
             # log in logging file
             if time_step % log_freq == 0:
@@ -224,6 +221,7 @@ def train():
                 print("model saved")
                 print("Elapsed Time  : ", datetime.now().replace(microsecond=0) - start_time)
                 print("--------------------------------------------------------------------------------------------")
+                run_num_pretrained += 1
 
             # break; if the episode is over
             if done:
