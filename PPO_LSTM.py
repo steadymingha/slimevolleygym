@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.distributions import MultivariateNormal
 from torch.distributions import Categorical
 from torch.distributions import Bernoulli
-from slimevolleygym import SlimeVolleyEnv
 
 
 ################################## set device ##################################
@@ -42,24 +41,18 @@ class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim, has_continuous_action_space, action_std_init):
         super(ActorCritic, self).__init__()
 
-        self.has_continuous_action_space = has_continuous_action_space
+        self.hidden_size = 64
+        self.num_layers = 2
+        self.lstm = nn.LSTM(state_dim, 64, 2, batch_first=True)
+        self.fc = nn.Linear(64, action_dim)
 
-        self.actor = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.Tanh(),
-            nn.Linear(128, 128),
-            nn.Tanh(),
-            nn.Linear(128, action_dim),
-            # nn.Sigmoid()
-            nn.Softmax(dim=-1)
-        )
         # critic
         self.critic = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, 64),
             nn.Tanh(),
-            nn.Linear(128, 128),
+            nn.Linear(64, 64),
             nn.Tanh(),
-            nn.Linear(128, 1)
+            nn.Linear(64, 1)
         )
 
 
@@ -69,20 +62,18 @@ class ActorCritic(nn.Module):
     def act(self, state):
 
         action_probs = self.actor(state)
-
-        dist = Categorical(action_probs)
-        action = dist.sample()
-
-        # dist = Bernoulli(action_probs)
+        # dist = Categorical(action_probs)
+        #
         # action = dist.sample()
 
-
+        dist = Bernoulli(action_probs)
+        action = dist.sample()
 
         action_logprob = dist.log_prob(action)
 
         state_val = self.critic(state)
 
-        return action, action_logprob.detach(), state_val.detach()
+        return action.detach(), action_logprob.detach(), state_val.detach()
 
     def evaluate(self, state, action):
 
@@ -98,8 +89,8 @@ class ActorCritic(nn.Module):
         #         action = action.reshape(-1, self.action_dim)
         # else:
         action_probs = self.actor(state)
-        dist = Categorical(action_probs)
-        # dist = Bernoulli(action_probs)
+        # dist = Categorical(action_probs)
+        dist = Bernoulli(action_probs)
 
         action_logprobs = dist.log_prob(action)
         dist_entropy = dist.entropy()
@@ -136,6 +127,18 @@ class PPO:
 
 
     def select_action(self, state, action_idx):
+        # if self.has_continuous_action_space:
+        #     with torch.no_grad():
+        #         state = torch.FloatTensor(state).to(device)
+        #         action, action_logprob, state_val = self.policy_old.act(state)
+        #
+        #     self.buffer.states.append(state)
+        #     self.buffer.actions.append(action)
+        #     self.buffer.logprobs.append(action_logprob)
+        #     self.buffer.state_values.append(state_val)
+        #
+        #     return action.detach().cpu().numpy().flatten()
+        # else:
         with torch.no_grad():
             state = torch.FloatTensor(state).to(device)
             action, action_logprob, state_val = self.policy_old.act(state)
@@ -144,7 +147,6 @@ class PPO:
             self.buffer.actions.append(action)
             self.buffer.logprobs.append(action_logprob)
             self.buffer.state_values.append(state_val)
-
 
         return action#.item()
 

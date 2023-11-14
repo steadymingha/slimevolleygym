@@ -94,22 +94,22 @@ if __name__=="__main__":
     if has_continuous_action_space:
       action_dim = env.action_space.shape[0]
     else:
-      action_dim = env.action_space.n
+      action_dim = 6 #env.action_space.n
 
     # initialize a PPO agent
 
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space,
                   action_std)
     # checkpoint_path = 'PPO_preTrained/SlimeVolley-v0/best/PPO_SlimeVolley-v0_0_02709.pth'
-    checkpoint_path = 'PPO_preTrained/SlimeVolley-v0/best/PPO_SlimeVolley-v0_0_0.pth'
+    checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/PPO_SlimeVolley-v0_0_0.pth'
     print("loading network ..")
 
     ppo_agent.load(checkpoint_path)
 
     while not done:
 
-        action = ppo_agent.select_action(state)
-
+        action = ppo_agent.select_action(state,1)
+        action = env.action_table[action]
         obs, reward, done, _ = env.step(action)
 
         total_reward += reward
@@ -117,6 +117,8 @@ if __name__=="__main__":
         if RENDER_MODE:
           env.render()
           sleep(0.02) # 0.01
+
+        print(total_reward)
 
     env.close()
     print("cumulative score", total_reward)

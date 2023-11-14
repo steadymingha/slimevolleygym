@@ -11,7 +11,7 @@ import gym
 import slimevolleygym
 
 from PPO import PPO
-
+from time import sleep
 
 ################################### Training ###################################
 def train():
@@ -62,7 +62,7 @@ def train():
     # if has_continuous_action_space:
     #     action_dim = env.action_space.shape[0]
     # else:
-    action_dim = env.action_space.n
+    action_dim = 6 #env.action_space.n
 
     ###################### logging ######################
 
@@ -103,25 +103,6 @@ def train():
     #####################################################
 
     # ############# print all hyperparameters #############
-    # print("--------------------------------------------------------------------------------------------")
-    # print("max training timesteps : ", max_training_timesteps)
-    # print("max timesteps per episode : ", max_ep_len)
-    # print("model saving frequency : " + str(save_model_freq) + " timesteps")
-    # print("log frequency : " + str(log_freq) + " timesteps")
-    # print("printing average reward over episodes in last : " + str(print_freq) + " timesteps")
-    # print("--------------------------------------------------------------------------------------------")
-    # print("state space dimension : ", state_dim)
-    # print("action space dimension : ", action_dim)
-    # print("--------------------------------------------------------------------------------------------")
-    if has_continuous_action_space:
-        print("Initializing a continuous action space policy")
-        print("--------------------------------------------------------------------------------------------")
-        print("starting std of action distribution : ", action_std)
-        print("decay rate of std of action distribution : ", action_std_decay_rate)
-        print("minimum std of action distribution : ", min_action_std)
-        print("decay frequency of std of action distribution : " + str(action_std_decay_freq) + " timesteps")
-    else:
-        print("Initializing a discrete action space policy")
     print("--------------------------------------------------------------------------------------------")
     print("PPO update frequency : " + str(update_timestep) + " timesteps")
     print("PPO K epochs : ", K_epochs)
@@ -165,6 +146,12 @@ def train():
 
     time_step = 0
     i_episode = 0
+######################################################################
+    # checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/gnama_best/PPO_SlimeVolley-v0_0_0.pth'
+    # print("loading network ..")
+    #
+    # ppo_agent.load(checkpoint_path)
+
 
     # training loop
     # while time_step <= max_training_timesteps:
@@ -175,9 +162,19 @@ def train():
 
         for t in range(1, max_ep_len + 1):
             # select action with policy
-            action = ppo_agent.select_action(state)
+            # action1 = ppo_agent.select_action(state, 1)
+            # action2 = ppo_agent.select_action(state, 2)
+            # action1 = env.action_table[action1]
+            # action2 = env.action_table[action2]
+            # state, reward, done, _ = env.step(action1, action2)
+
+
+            action = ppo_agent.select_action(state, 1)
+            action = env.action_table[action]
             state, reward, done, _ = env.step(action)
 
+            # env.render()
+            # sleep(0.02)  # 0.01
             # saving reward and is_terminals
             ppo_agent.buffer.rewards.append(reward)
             ppo_agent.buffer.is_terminals.append(done)
@@ -209,6 +206,8 @@ def train():
 
                 print("Episode : {} \t\t Timestep : {} \t\t Average Reward : {}".format(i_episode, time_step,
                                                                                         print_avg_reward))
+
+
 
                 print_running_reward = 0
                 print_running_episodes = 0
