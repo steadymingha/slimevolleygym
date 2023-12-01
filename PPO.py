@@ -110,7 +110,7 @@ class ActorCritic(nn.Module):
 
 class PPO:
     def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip,
-                 has_continuous_action_space, action_std_init=0.6):
+                 has_continuous_action_space=False, action_std_init=0.6):
 
         self.has_continuous_action_space = has_continuous_action_space
 
