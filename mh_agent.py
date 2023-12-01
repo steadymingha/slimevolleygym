@@ -31,9 +31,6 @@ def train():
     save_model_freq = int(1e5)  # save model frequency (in num timesteps)
 
     action_std = 0.6  # starting std for action distribution (Multivariate Normal)
-    action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
-    min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
-    action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num timesteps)
     #####################################################
 
     ## Note : print/log frequencies should be > than max_ep_len
@@ -59,9 +56,6 @@ def train():
     state_dim = env.observation_space.shape[0]
 
     # action space dimension
-    # if has_continuous_action_space:
-    #     action_dim = env.action_space.shape[0]
-    # else:
     action_dim = 6 #env.action_space.n
 
     ###################### logging ######################
@@ -147,7 +141,7 @@ def train():
     time_step = 0
     i_episode = 0
 ######################################################################
-    # checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/gnama_best/PPO_SlimeVolley-v0_0_0.pth'
+    # checkpoint_path = 'SlimeVolley-v0/gnama_best/PPO_SlimeVolley-v0_0_0.pth'
     # print("loading network ..")
     #
     # ppo_agent.load(checkpoint_path)

@@ -68,7 +68,7 @@ if __name__=="__main__":
   policy = slimevolleygym.BaselinePolicy() # defaults to use RNN Baseline for player
 
   env = gym.make("SlimeVolley-v0")
-  env.seed(np.random.randint(0, 10000))
+  # env.seed(np.random.randint(0, 10000))
   #env.seed(689)
   obs = env.reset()
   if RENDER_MODE:
