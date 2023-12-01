@@ -84,6 +84,19 @@ if __name__=="__main__":
 
   done = False
 
+  # initialize a SH agent
+  from collections import namedtuple
+  from Skynet.seunghyun_slime_a2c_v2 import Policy
+  import torch
+
+  gamma = 0.99
+  SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
+  lr = 5e-4
+  sh_agent = Policy(12, 6)
+  checkpoint_path = 'Skynet/volley_actor_v3_sh_old_r.pth'
+  sh_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+
+
   while not done:
 
     if manualMode: # override with keyboard
@@ -95,6 +108,9 @@ if __name__=="__main__":
       otherAction = otherManualAction
       obs, reward, done, _ = env.step(action, otherAction)
     else:
+
+      action = sh_agent.select_action(obs)
+      action = env.action_table[action]
       obs, reward, done, _ = env.step(action)
 
     if reward > 0 or reward < 0:
