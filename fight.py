@@ -38,21 +38,12 @@ if __name__=="__main__":
 
     ##################################################MH###########################
     # initialize a MH agent
-    state_dim = env.observation_space.shape[0]
-    action_dim = 6  # env.action_space.n
-    eps_clip = 0.2  # clip parameter for PPO
-    gamma = 0.99  # discount factor
-    K_epochs = 80  # update policy for K epochs
-
-    lr_actor = 0.0003  # learning rate for actor
-    lr_critic = 0.001  # learning rate for critic
     ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip)
     checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/PPO_SlimeVolley-v0_0_0.pth'
-    print("loading network ..")
-    torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
     #################################################MH###########################
 
-
+    torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
+    print("loading network ..")
     total_reward = 0
     done = False
     while not done:
@@ -66,8 +57,6 @@ if __name__=="__main__":
         if RENDER_MODE:
           env.render()
           sleep(0.02)
-
-        print(total_reward)
 
     env.close()
     print("cumulative score", total_reward)
