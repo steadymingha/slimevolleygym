@@ -38,7 +38,7 @@ def train():
     gamma = 0.99  # discount factor
 
     lr_actor = 0.0003  # learning rate for actor network
-    lr_critic = 0.0001 #0.001  # learning rate for critic network
+    lr_critic = 0.001 #0.001  # learning rate for critic network
 
     random_seed = 0  # set random seed if required (0 = no random seed)
     #####################################################
