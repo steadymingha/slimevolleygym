@@ -2,9 +2,6 @@ import torch
 import torch.nn as nn
 from torch.distributions import MultivariateNormal
 from torch.distributions import Categorical
-from torch.distributions import Bernoulli
-from slimevolleygym import SlimeVolleyEnv
-
 
 ################################## set device ##################################
 print("============================================================================================")
@@ -39,27 +36,25 @@ class RolloutBuffer:
 
 
 class ActorCritic(nn.Module):
-    def __init__(self, state_dim, action_dim, has_continuous_action_space, action_std_init):
+    def __init__(self, state_dim, num_node, action_dim):
         super(ActorCritic, self).__init__()
 
-        self.has_continuous_action_space = has_continuous_action_space
-
         self.actor = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, num_node),
             nn.Tanh(),
-            nn.Linear(128, 128),
+            nn.Linear(num_node, num_node),
             nn.Tanh(),
-            nn.Linear(128, action_dim),
+            nn.Linear(num_node, action_dim),
             # nn.Sigmoid()
             nn.Softmax(dim=-1)
         )
         # critic
         self.critic = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim, num_node),
             nn.Tanh(),
-            nn.Linear(128, 128),
+            nn.Linear(num_node, num_node),
             nn.Tanh(),
-            nn.Linear(128, 1)
+            nn.Linear(num_node, 1)
         )
 
 
@@ -69,14 +64,9 @@ class ActorCritic(nn.Module):
     def act(self, state):
 
         action_probs = self.actor(state)
-
         dist = Categorical(action_probs)
+
         action = dist.sample()
-
-        # dist = Bernoulli(action_probs)
-        # action = dist.sample()
-
-
 
         action_logprob = dist.log_prob(action)
 
@@ -85,18 +75,6 @@ class ActorCritic(nn.Module):
         return action, action_logprob.detach(), state_val.detach()
 
     def evaluate(self, state, action):
-
-        # if self.has_continuous_action_space:
-        #     action_mean = self.actor(state)
-        #
-        #     action_var = self.action_var.expand_as(action_mean)
-        #     cov_mat = torch.diag_embed(action_var).to(device)
-        #     dist = MultivariateNormal(action_mean, cov_mat)
-        #
-        #     # For Single Action Environments.
-        #     if self.action_dim == 1:
-        #         action = action.reshape(-1, self.action_dim)
-        # else:
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
         # dist = Bernoulli(action_probs)
@@ -109,13 +87,7 @@ class ActorCritic(nn.Module):
 
 
 class PPO:
-    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip,
-                 has_continuous_action_space=False, action_std_init=0.6):
-
-        self.has_continuous_action_space = has_continuous_action_space
-
-        if has_continuous_action_space:
-            self.action_std = action_std_init
+    def __init__(self, state_dim, num_node, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip):
 
         self.gamma = gamma
         self.eps_clip = eps_clip
@@ -123,19 +95,19 @@ class PPO:
 
         self.buffer = RolloutBuffer()
 
-        self.policy = ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init).to(device)
+        self.policy = ActorCritic(state_dim, num_node, action_dim).to(device)
         self.optimizer = torch.optim.Adam([
             {'params': self.policy.actor.parameters(), 'lr': lr_actor},
             {'params': self.policy.critic.parameters(), 'lr': lr_critic}
         ])
 
-        self.policy_old = ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init).to(device)
+        self.policy_old = ActorCritic(state_dim, num_node, action_dim).to(device)
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         self.MseLoss = nn.MSELoss()
 
 
-    def select_action(self, state, action_idx):
+    def select_action(self, state, action_idx=1):
         with torch.no_grad():
             state = torch.FloatTensor(state).to(device)
             action, action_logprob, state_val = self.policy_old.act(state)
@@ -146,7 +118,7 @@ class PPO:
             self.buffer.state_values.append(state_val)
 
 
-        return action#.item()
+        return action.item()
 
     def update(self):
         # Monte Carlo estimate of returns
@@ -187,7 +159,7 @@ class PPO:
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages.unsqueeze(1)
 
             # final loss of clipped objective PPO
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
+            loss = -torch.min(surr1, surr2) + 0.1 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
 
             # take gradient step
             self.optimizer.zero_grad()
