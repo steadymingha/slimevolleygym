@@ -714,7 +714,7 @@ class SlimeVolleyEnv(gym.Env):
     """
 
     self.t = 0
-    self.t_limit = 3000
+    self.t_limit = 300000000000
 
     #self.action_space = spaces.Box(0, 1.0, shape=(3,))
     if self.atari_mode:

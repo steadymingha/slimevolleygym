@@ -14,10 +14,20 @@ from PPO import PPO
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 
+
 MH = False
-SH = True
-Video = False
-YS = True
+SH_r = False
+SH_l = False
+Video_r = False
+Video_l = False
+YS_r = False
+YS_l = False
+
+
+# Video_l =
+YS_r = True
+
+
 
 Record = False
 video_name = 'Skynet/record/좌영상우승현.mp4'
@@ -53,30 +63,47 @@ if __name__=="__main__":
     # checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/PPO_SlimeVolley-v0_0_0.pth'
     ##################################################MH###########################
     # initialize a SH agent
-    if SH:
+    if SH_r:
         from collections import namedtuple
         from Skynet.seunghyun_slime_a2c_v2 import Policy
         gamma = 0.99
         SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
         lr = 5e-4
         sh_agent = Policy(12,6)
-        checkpoint_path = 'Skynet/volley_actor_v3_new.pth'
+        checkpoint_path = 'Skynet/fight_day2/volley_actor_v4_right.pth'
         sh_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+    elif SH_l:
+        from collections import namedtuple
+        from Skynet.seunghyun_slime_a2c_v2 import Policy
+
+        gamma = 0.99
+        SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
+        lr = 5e-4
+        sh_agent = Policy(12, 6)
+        checkpoint_path = 'Skynet/fight_day2/volley_actor_v4_left.pth'
+        sh_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+
     #################################################MH###########################
     # # intialize a Video agent
-    if Video:
+    if Video_r:
         from stable_baselines3 import PPO
-        video_agent = PPOPolicy('Skynet/video_model.zip')
+        video_agent = PPOPolicy('Skynet/fight_day2/best_model_video.zip')
+    elif Video_l:
+        from stable_baselines3 import PPO
+        video_agent = PPOPolicy('Skynet/fight_day2/best_model_video.zip')
 
     ##################################################MH###########################
     # initialize a YS agent
-    if YS:
+    if YS_r:
         from Skynet.yongsun_final_script import ActorCritic
         ys_agent = ActorCritic(12, 128, 6)
-        # checkpoint_path = 'Skynet/yongsun_agent_right.pth'
-        checkpoint_path = 'Skynet/yongsun_agent_left.pth'
+        checkpoint_path = 'Skynet/fight_day2/yongsun_right.pth'
         ys_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
-
+    elif YS_l:
+        from Skynet.yongsun_final_script import ActorCritic
+        ys_agent = ActorCritic(12, 128, 6)
+        checkpoint_path = 'Skynet/fight_day2/yongsun_left.pth'
+        ys_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
     #################################################MH###########################
 
     print("loading network ..")
@@ -86,26 +113,32 @@ if __name__=="__main__":
     done = False
 
     while not done:
-        if SH:
+        if SH_r:
             action_right = sh_agent.select_action(state_right)
             action_right = env.action_table[action_right]
+        elif SH_l:
+            action_left = sh_agent.select_action(state_left)
+            action_left = env.action_table[action_left]
 
-        if Video:
+        if Video_r:
             action_right = video_agent.select_action(state_right)
-            # action_right = video_agent.select_action(state_right)
+        elif Video_l:
+            action_left = video_agent.select_action(state_left)
 
-        if YS:
+        if YS_r:
+            # action_left = ys_agent.select_action(state_left)
+            action_right = ys_agent.select_action(state_right)
+        elif YS_l:
             action_left = ys_agent.select_action(state_left)
-            # action_right = ys_agent.select_action(state_right)
 
-        state_right, reward, done, info = env.step(action_right, action_left)
+        state_right, reward, done, info = env.step(action_right)#, action_left)
         state_left = info['otherState']
 
         total_reward += reward
 
         if Record: video_recorder.capture_frame()
         env.render()
-        # sleep(0.02)
+        sleep(0.01)
 
     env.close()
     if Record: video_recorder.close()

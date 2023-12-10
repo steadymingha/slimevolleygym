@@ -102,7 +102,7 @@ def train():
         state = env.reset()
         episode_rewards = 0
 
-        for t in range(1, max_ep_len + 1):
+        for t in range(max_ep_len + 1):
             # select action with policy
             action = ppo_agent.select_action(state)
             state, reward, done, _ = env.step(action)
