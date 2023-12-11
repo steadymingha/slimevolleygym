@@ -24,13 +24,13 @@ YS_r = False
 YS_l = False
 
 
-# Video_l =
+Video_l = True
 YS_r = True
 
 
 
-Record = False
-video_name = 'Skynet/record/좌영상우승현.mp4'
+Record = True
+video_name = 'Skynet/fight_day2/좌영상우용선_new.mp4'
 
 
 
@@ -95,20 +95,21 @@ if __name__=="__main__":
     ##################################################MH###########################
     # initialize a YS agent
     if YS_r:
-        from Skynet.yongsun_final_script import ActorCritic
+        from Skynet.YS_V2 import ActorCritic
         ys_agent = ActorCritic(12, 128, 6)
-        checkpoint_path = 'Skynet/fight_day2/yongsun_right.pth'
+        checkpoint_path = 'Skynet/fight_day2/yongsun-v2.pth'
         ys_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
     elif YS_l:
-        from Skynet.yongsun_final_script import ActorCritic
+        from Skynet.YS_V2 import ActorCritic
         ys_agent = ActorCritic(12, 128, 6)
-        checkpoint_path = 'Skynet/fight_day2/yongsun_left.pth'
+        checkpoint_path = 'Skynet/fight_day2/yongsun-v2.pth'
         ys_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
     #################################################MH###########################
 
     print("loading network ..")
     state_right = env.reset()
     state_left = state_right.copy()
+
     total_reward = 0
     done = False
 
@@ -126,12 +127,13 @@ if __name__=="__main__":
             action_left = video_agent.select_action(state_left)
 
         if YS_r:
-            # action_left = ys_agent.select_action(state_left)
-            action_right = ys_agent.select_action(state_right)
+            # action_right = ys_agent.select_action(state_right)
+            action = ys_agent.forward_predict(state_right)
+            action_right = env.action_table[action]
         elif YS_l:
             action_left = ys_agent.select_action(state_left)
 
-        state_right, reward, done, info = env.step(action_right)#, action_left)
+        state_right, reward, done, info = env.step(action_right, action_left)
         state_left = info['otherState']
 
         total_reward += reward

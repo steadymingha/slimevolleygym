@@ -155,11 +155,11 @@ class PPO:
             ratios = torch.exp(logprobs - old_logprobs.detach())
 
             # Finding Surrogate Loss
-            surr1 = ratios * advantages.unsqueeze(1)
-            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages.unsqueeze(1)
+            surr1 = ratios * advantages#.unsqueeze(1)
+            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip)# * advantages.unsqueeze(1)
 
             # final loss of clipped objective PPO
-            loss = -torch.min(surr1, surr2) + 0.1 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
+            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy
 
             # take gradient step
             self.optimizer.zero_grad()

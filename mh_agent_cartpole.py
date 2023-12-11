@@ -1,5 +1,6 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["WANDB_API_KEY"] ="ea4767cdbc1f73ed2efc7cf70d83a1526fea8042"
 import glob
 import time
 from datetime import datetime
@@ -65,7 +66,7 @@ def train():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    checkpoint_path = directory + "cartpole_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
     print("save checkpoint path : " + checkpoint_path)
     #####################################################
 
@@ -119,12 +120,15 @@ def train():
             if time_step % update_timestep == 0:
                 ppo_agent.update()
 
-
             if done:
                 break
 
-        # print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
+
+        print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
         wandb.log({"Episode Reward": episode_rewards})
+        if i_episode % 10 == 0:
+            torch.save(ppo_agent.policy.state_dict(), checkpoint_path)
+            print("Saved checkpoint")
         i_episode += 1
 
     env.close()

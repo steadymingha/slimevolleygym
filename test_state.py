@@ -7,9 +7,8 @@ FPS (no-render): 100000 steps /7.956 seconds. 12.5K/s.
 import math
 import numpy as np
 import gym
-# import gymnasium as gym
 import slimevolleygym
-
+from PPO import PPO
 np.set_printoptions(threshold=20, precision=3, suppress=True, linewidth=200)
 
 # game settings:
@@ -33,48 +32,32 @@ if __name__=="__main__":
   """
 
   if RENDER_MODE:
-    import pyglet
     from pyglet.window import key
-
     from time import sleep
 
-  manualAction = [0, 0, 0] # forward, backward, jump
-  otherManualAction = [0, 0, 0]
-  manualMode = False
-  otherManualMode = False
-
+  env = gym.make("CartPole-v1")
   # taken from https://github.com/openai/gym/blob/master/gym/envs/box2d/car_racing.py
-  def key_press(k, mod):
-    global manualMode, manualAction, otherManualMode, otherManualAction
-    if k == key.LEFT:  manualAction[0] = 1
-    if k == key.RIGHT: manualAction[1] = 1
-    if k == key.UP:    manualAction[2] = 1
-    if (k == key.LEFT or k == key.RIGHT or k == key.UP): manualMode = True
-
-    if k == key.D:     otherManualAction[0] = 1
-    if k == key.A:     otherManualAction[1] = 1
-    if k == key.W:     otherManualAction[2] = 1
-    if (k == key.D or k == key.A or k == key.W): otherManualMode = True
-
-  def key_release(k, mod):
-    global manualMode, manualAction, otherManualMode, otherManualAction
-    if k == key.LEFT:  manualAction[0] = 0
-    if k == key.RIGHT: manualAction[1] = 0
-    if k == key.UP:    manualAction[2] = 0
-    if k == key.D:     otherManualAction[0] = 0
-    if k == key.A:     otherManualAction[1] = 0
-    if k == key.W:     otherManualAction[2] = 0
 
   policy = slimevolleygym.BaselinePolicy() # defaults to use RNN Baseline for player
 
-  env = gym.make("SlimeVolley-v0")
-  # env.seed(np.random.randint(0, 10000))
+  state_dim = env.observation_space.shape[0]
+  num_node = 64
+  action_dim = env.action_space.n
+  K_epochs = 10  # 80  # update policy for K epochs in one PPO update
+  eps_clip = 0.2  # clip parameter for PPO
+  gamma = 0.99  # discount factor
+  lr_actor = 0.0003  # learning rate for actor network
+  lr_critic = 0.001  # 0.001  # learning rate for critic network
+
+  ppo_agent = PPO(state_dim, num_node, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip)
+
+  env.seed(np.random.randint(0, 10000))
   #env.seed(689)
+
   obs = env.reset()
+
   if RENDER_MODE:
     env.render()
-    env.viewer.window.on_key_press = key_press
-    env.viewer.window.on_key_release = key_release
 
   # obs = env.reset()
 
@@ -83,39 +66,18 @@ if __name__=="__main__":
   action = np.array([0, 0, 0])
 
   done = False
+  checkpoint_path = 'PPO_preTrained/CartPole-v1/cartpole_CartPole-v1_0_0.pth'
+  print("loading network ..")
 
-  # initialize a SH agent
-  from collections import namedtuple
-  from Skynet.seunghyun_slime_a2c_v2 import Policy
-  import torch
+  ppo_agent.load(checkpoint_path)
+  while True:#not done:
 
-  gamma = 0.99
-  SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
-  lr = 5e-4
-  sh_agent = Policy(12, 6)
-  checkpoint_path = 'Skynet/volley_actor_v3_sh_old_r.pth'
-  sh_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
+    action = ppo_agent.select_action(obs)
 
+    obs, reward, done, _ = env.step(action)
 
-  while not done:
-
-    if manualMode: # override with keyboard
-      action = manualAction
-    else:
-      action = policy.predict(obs)
-
-    if otherManualMode:
-      otherAction = otherManualAction
-      obs, reward, done, _ = env.step(action, otherAction)
-    else:
-
-      action = sh_agent.select_action(obs)
-      action = env.action_table[action]
-      obs, reward, done, _ = env.step(action)
-
-    if reward > 0 or reward < 0:
-      manualMode = False
-      otherManualMode = False
+    if done:
+      env.reset()
 
     total_reward += reward
 
