@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.distributions import MultivariateNormal
 from torch.distributions import Categorical
+import wandb
 
 ################################## set device ##################################
 print("============================================================================================")
@@ -107,16 +107,15 @@ class PPO:
         self.MseLoss = nn.MSELoss()
 
 
-    def select_action(self, state, action_idx=1):
+    def select_action(self, state):
         with torch.no_grad():
             state = torch.FloatTensor(state).to(device)
             action, action_logprob, state_val = self.policy_old.act(state)
-        if action_idx == 1:
-            self.buffer.states.append(state)
-            self.buffer.actions.append(action)
-            self.buffer.logprobs.append(action_logprob)
-            self.buffer.state_values.append(state_val)
 
+        self.buffer.states.append(state)
+        self.buffer.actions.append(action)
+        self.buffer.logprobs.append(action_logprob)
+        self.buffer.state_values.append(state_val)
 
         return action.item()
 
@@ -156,7 +155,7 @@ class PPO:
 
             # Finding Surrogate Loss
             surr1 = ratios * advantages#.unsqueeze(1)
-            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip)# * advantages.unsqueeze(1)
+            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages#.unsqueeze(1)
 
             # final loss of clipped objective PPO
             loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values, rewards) - 0.01 * dist_entropy

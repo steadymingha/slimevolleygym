@@ -35,7 +35,7 @@ if __name__=="__main__":
     from pyglet.window import key
     from time import sleep
 
-  env = gym.make("CartPole-v1")
+  env = gym.make("LunarLander-v2")
   # taken from https://github.com/openai/gym/blob/master/gym/envs/box2d/car_racing.py
 
   policy = slimevolleygym.BaselinePolicy() # defaults to use RNN Baseline for player
@@ -66,24 +66,24 @@ if __name__=="__main__":
   action = np.array([0, 0, 0])
 
   done = False
-  checkpoint_path = 'PPO_preTrained/CartPole-v1/cartpole_CartPole-v1_0_0.pth'
+  checkpoint_path = 'PPO_preTrained/LunarLander-v2/best/cartpole_LunarLander-v2_0_0.pth'
   print("loading network ..")
 
   ppo_agent.load(checkpoint_path)
-  while True:#not done:
+  while not done:
 
     action = ppo_agent.select_action(obs)
 
     obs, reward, done, _ = env.step(action)
 
     if done:
+      # break
       env.reset()
 
     total_reward += reward
 
     if RENDER_MODE:
       env.render()
-      sleep(0.02) # 0.01
 
   env.close()
   print("cumulative score", total_reward)

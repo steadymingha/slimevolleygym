@@ -18,18 +18,25 @@ import wandb
 
 ####################################################################################
 id = datetime.now().strftime("%Y%m%d_%H%M%S")
-wandb.init(project="CartPole-v1", name =id)
+wandb.init(project="LunarLander-v2", name =id)
 print("This run's ID:", wandb.run.id)
 wandb.run.save()
 # ################################### Training ###################################
 def train():
 
     ####### initialize environment hyperp
-    # env_name = "MountainCar-v0"
-    env_name = "CartPole-v1"
+    env_name = "LunarLander-v2"
+    # env_name = "CartPole-v1"
 
-    max_ep_len = 500# 3000  # max timesteps in one episode
+    max_ep_len = 1000# 3000  # max timesteps in one episode
+    # landing pad and coming to rest is about 100-140 pts
+    # crashes -100 pts
+    # each leg ground contact is +10
+    # firing main engine is -0.3 pts each frame
+    # firing side engine is -0.03 pts each frame
+    # Solved is 200 pts
 
+    # Action space is Discrete(4) (do nothing, left, main, right)
 
     ################ PPO hyperparameters ################
     update_timestep = max_ep_len * 4  # update policy every n timesteps
@@ -96,7 +103,7 @@ def train():
     time_step = 0
     i_episode = 0
 ######################################################################
-
+    pre_rewards = 0
     # training loop
     while True:
 
@@ -123,13 +130,15 @@ def train():
             if done:
                 break
 
-
-        print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
         wandb.log({"Episode Reward": episode_rewards})
+
         if i_episode % 10 == 0:
+            print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
+        if pre_rewards < episode_rewards:
             torch.save(ppo_agent.policy.state_dict(), checkpoint_path)
-            print("Saved checkpoint")
+
         i_episode += 1
+        pre_rewards = episode_rewards
 
     env.close()
 
