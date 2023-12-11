@@ -165,6 +165,9 @@ class PPO:
             loss.mean().backward()
             self.optimizer.step()
 
+            loss_sum = loss.sum()/len(loss)
+            wandb.log({"value Loss for every epoch": loss_sum})
+
         # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
 
