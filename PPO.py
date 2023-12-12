@@ -120,6 +120,7 @@ class PPO:
         return action.item()
 
     def update(self):
+        # [x, y, vx, vy, ball_x, ball_y, ball_vx, ball_vy, op_x, op_y, op_vx, op_vy] = obs
         # Monte Carlo estimate of returns
         rewards = []
         discounted_reward = 0

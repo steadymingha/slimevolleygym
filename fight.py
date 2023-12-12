@@ -24,13 +24,13 @@ YS_r = False
 YS_l = False
 
 
-Video_l = True
-YS_r = True
+YS_l = True
+Video_r = True
 
 
 
 Record = True
-video_name = 'Skynet/fight_day2/좌영상우용선_new.mp4'
+video_name = 'Skynet/ys_gujilgujil/좌용선우영상_new.mp4'
 
 
 
@@ -102,7 +102,7 @@ if __name__=="__main__":
     elif YS_l:
         from Skynet.YS_V2 import ActorCritic
         ys_agent = ActorCritic(12, 128, 6)
-        checkpoint_path = 'Skynet/fight_day2/yongsun-v2.pth'
+        checkpoint_path = 'Skynet/ys_gujilgujil/checkpoint.pth'
         ys_agent.load_state_dict(torch.load(checkpoint_path, map_location=lambda storage, loc: storage))
     #################################################MH###########################
 
@@ -131,7 +131,8 @@ if __name__=="__main__":
             action = ys_agent.forward_predict(state_right)
             action_right = env.action_table[action]
         elif YS_l:
-            action_left = ys_agent.select_action(state_left)
+            action_left = ys_agent.forward_predict(state_left)
+            action_left = env.action_table[action_left]
 
         state_right, reward, done, info = env.step(action_right, action_left)
         state_left = info['otherState']
@@ -140,7 +141,7 @@ if __name__=="__main__":
 
         if Record: video_recorder.capture_frame()
         env.render()
-        sleep(0.01)
+        # sleep(0.01)
 
     env.close()
     if Record: video_recorder.close()
