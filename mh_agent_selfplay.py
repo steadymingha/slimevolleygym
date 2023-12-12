@@ -12,7 +12,7 @@ import gym
 # import roboschool
 import slimevolleygym
 
-from PPO import PPO
+from PPO_selfplay import PPO
 from time import sleep
 import wandb
 
@@ -51,7 +51,7 @@ def train():
     state_dim = env.observation_space.shape[0]
 
 
-    action_dim = 6#env.action_space.n
+    action_dim = 6  #env.action_space.n
 
 
     ################### checkpointing ###################
@@ -65,7 +65,7 @@ def train():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    checkpoint_path = directory + "{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    checkpoint_path = directory + "{}_{}_{}_selfplay.pth".format(env_name, random_seed, run_num_pretrained)
     print("save checkpoint path : " + checkpoint_path)
     #####################################################
 
@@ -99,19 +99,29 @@ def train():
     # training loop
     while True:
 
-        state = env.reset()
+        state_right = env.reset()
+        state_left = state_right
         episode_rewards = 0
 
         for t in range(max_ep_len + 1):
             # select action with policy
-            action = ppo_agent.select_action(state)
-            action = env.action_table[action]
-            state, reward, done, info = env.step(action_right, action_left)
+            action_right = ppo_agent.select_action(state_right)
+            action_right = env.action_table[action_right]
+
+            action_left = ppo_agent.select_action(state_left)
+            action_left = env.action_table[action_left]
+
+            state_right, reward, done, info = env.step(action_right, action_left)
             state_left = info['otherState']
 
-            # saving reward and is_terminals
+            # saving reward and is_terminals for right
             ppo_agent.buffer.rewards.append(reward)
             ppo_agent.buffer.is_terminals.append(done)
+
+            # saving reward and is_terminals for left
+            ppo_agent.buffer.rewards.append(-reward)
+            ppo_agent.buffer.is_terminals.append(done)
+
 
             time_step += 1
             episode_rewards += reward
@@ -126,8 +136,8 @@ def train():
 
         wandb.log({"Episode Reward": episode_rewards})
 
-        if i_episode % 10 == 0:
-            print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
+        # if i_episode % 10 == 0:
+        #     print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
         if pre_rewards < episode_rewards:
             torch.save(ppo_agent.policy.state_dict(), checkpoint_path)
 
