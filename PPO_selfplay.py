@@ -87,7 +87,7 @@ class ActorCritic(nn.Module):
 
 
 class PPO:
-    def __init__(self, state_dim, num_node, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip):
+    def __init__(self, state_dim, num_node=64, action_dim=6, lr_actor=0.0003, lr_critic=0.001, gamma=0.99, K_epochs=80, eps_clip=0.2):
 
         self.gamma = gamma
         self.eps_clip = eps_clip

@@ -10,12 +10,13 @@ import gym
 import torch
 # import gymnasium as gym
 import slimevolleygym
-from PPO import PPO
+
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 
 
-MH = False
+MH_r = False
+MH_l = False
 SH_r = False
 SH_l = False
 Video_r = False
@@ -23,14 +24,13 @@ Video_l = False
 YS_r = False
 YS_l = False
 
-
-YS_l = True
-Video_r = True
+MH_l = True
+YS_r = True
 
 
 
 Record = True
-video_name = 'Skynet/ys_gujilgujil/좌용선우영상_new.mp4'
+video_name = 'Skynet/ys_gujilgujil/좌명화우용선2_new.mp4'
 
 
 
@@ -52,15 +52,18 @@ if __name__=="__main__":
 
     env = gym.make("SlimeVolley-v0")
     env.seed(np.random.randint(0, 10000))
-
+    env.metadata['video.frames_per_second'] = 60
     env.render()
     if Record: video_recorder = VideoRecorder(env, video_name)
 
 
     # ##################################################MH###########################
-    # # initialize a MH agent
-    # ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip)
-    # checkpoint_path = '/home/user/RLstudy/slimevolleygym/PPO_preTrained/SlimeVolley-v0/PPO_SlimeVolley-v0_0_0.pth'
+    # initialize a MH agent
+    from PPO_selfplay import PPO
+    if MH_r or MH_l:
+        mh_agent = PPO(12, 64, 6)
+        checkpoint_path = 'PPO_preTrained/SlimeVolley-v0/SlimeVolley-v0_0_0_selfplay.pth'
+        mh_agent.load(checkpoint_path)
     ##################################################MH###########################
     # initialize a SH agent
     if SH_r:
@@ -114,6 +117,13 @@ if __name__=="__main__":
     done = False
 
     while not done:
+        if MH_r:
+            action_right = mh_agent.select_action(state_right)
+            action_right = env.action_table[action_right]
+        elif MH_l:
+            action_left = mh_agent.select_action(state_left)
+            action_left = env.action_table[action_left]
+
         if SH_r:
             action_right = sh_agent.select_action(state_right)
             action_right = env.action_table[action_right]

@@ -66,7 +66,7 @@ if __name__=="__main__":
   action = np.array([0, 0, 0])
 
   done = False
-  checkpoint_path = 'PPO_preTrained/SlimeVolley-v0/SlimeVolley-v0_0_0.pth'
+  checkpoint_path = 'PPO_preTrained/SlimeVolley-v0/SlimeVolley-v0_0_0_selfplay.pth'
   print("loading network ..")
 
   ppo_agent.load(checkpoint_path)

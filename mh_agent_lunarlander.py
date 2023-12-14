@@ -49,6 +49,8 @@ def train():
     lr_critic = 0.001 #0.001  # learning rate for critic network
 
     random_seed = 0  # set random seed if required (0 = no random seed)
+
+    wandb.config.update({"update_timestep": update_timestep, "K_epochs": K_epochs, "eps_clip": eps_clip, "gamma": gamma, "lr_actor": lr_actor, "lr_critic": lr_critic, "random_seed": random_seed})
     #####################################################
 
     print("training environment name : " + env_name)
@@ -73,7 +75,7 @@ def train():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    checkpoint_path = directory + "cartpole_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    checkpoint_path = directory + "lunarlander_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
     print("save checkpoint path : " + checkpoint_path)
     #####################################################
 
@@ -130,10 +132,10 @@ def train():
             if done:
                 break
 
-        wandb.log({"Episode Reward": episode_rewards})
+        # wandb.log({"Episode Reward": episode_rewards})
 
-        if i_episode % 10 == 0:
-            print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
+        # if i_episode % 10 == 0:
+        #     print("Episode: {}, reward: {}".format(i_episode, episode_rewards))
         if pre_rewards < episode_rewards:
             torch.save(ppo_agent.policy.state_dict(), checkpoint_path)
 
